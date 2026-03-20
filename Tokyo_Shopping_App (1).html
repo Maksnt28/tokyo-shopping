@@ -1,0 +1,1328 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Tokyo Shopping">
+<title>🗾 Tokyo Shopping</title>
+<style>
+:root{
+  --ven:#16213e;--ven-l:#d6e4f0;
+  --sam:#0f3460;--sam-l:#d0e8f9;
+  --dim:#533483;--dim-l:#e8def5;
+  --lun:#1b4332;--lun-l:#d3efe1;
+  --mar:#7d1e1e;--mar-l:#f5d5d5;
+  --warn-bg:#fff3cd;--warn-fg:#856404;
+  --resto-bg:#fef0f0;--resto-fg:#8b0000;
+  --tea-bg:#f0fef4;--tea-fg:#1b5e20;
+  --trajet-bg:#f5f5f5;--trajet-fg:#555;
+  --radius:12px;--shadow:0 2px 10px rgba(0,0,0,.1);
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',Arial,sans-serif;background:#f2f2f7;color:#1c1c1e;font-size:15px;padding-bottom:40px}
+
+/* Header */
+.app-header{background:linear-gradient(135deg,#1a1a2e,#16213e);color:white;padding:20px 18px 16px;position:sticky;top:0;z-index:100;box-shadow:0 2px 12px rgba(0,0,0,.3)}
+.app-header h1{font-size:18px;font-weight:700;letter-spacing:-.3px}
+.app-header p{font-size:12px;color:rgba(255,255,255,.7);margin-top:3px}
+
+/* Day nav pills */
+.day-nav{display:flex;gap:8px;padding:14px 16px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;background:#f2f2f7;position:sticky;top:68px;z-index:99}
+.day-nav::-webkit-scrollbar{display:none}
+.day-pill{flex-shrink:0;padding:7px 14px;border-radius:20px;font-size:13px;font-weight:600;cursor:pointer;border:none;transition:all .2s}
+.day-pill.active{color:white;transform:scale(1.05)}
+.day-pill.ven{background:var(--ven);color:white}
+.day-pill.sam{background:var(--sam);color:white}
+.day-pill.dim{background:var(--dim);color:white}
+.day-pill.lun{background:var(--lun);color:white}
+.day-pill.mar{background:var(--mar);color:white}
+.day-pill:not(.active){opacity:.55}
+
+/* Day sections */
+.day-section{display:none;padding:0 14px}
+.day-section.visible{display:block}
+
+.day-header-bar{border-radius:var(--radius) var(--radius) 0 0;padding:14px 16px;color:white;margin-top:12px}
+.day-header-bar h2{font-size:17px;font-weight:700}
+.day-header-bar .sub{font-size:12px;opacity:.8;margin-top:3px}
+
+/* Route button */
+.route-wrap{padding:10px 14px;border-radius:0 0 var(--radius) var(--radius);margin-bottom:4px}
+.route-btn{display:flex;align-items:center;justify-content:center;gap:8px;background:#1c1c1e;color:white;padding:11px 18px;border-radius:10px;text-decoration:none;font-size:14px;font-weight:600;width:100%}
+
+/* Trajet row */
+.trajet-row{background:var(--trajet-bg);border-radius:8px;padding:8px 12px;margin:6px 0;font-size:12px;color:var(--trajet-fg);font-style:italic;display:flex;align-items:center;gap:6px}
+
+/* Stop card */
+.stop-card{background:white;border-radius:var(--radius);margin:6px 0;box-shadow:var(--shadow);overflow:hidden}
+.stop-card.resto{border-left:4px solid var(--resto-fg)}
+.stop-card.tea{border-left:4px solid var(--tea-fg)}
+.stop-card.alert{border-left:4px solid #ff9500}
+
+.stop-header{display:flex;align-items:center;gap:10px;padding:12px 14px;cursor:pointer;position:relative}
+.stop-time{font-size:12px;font-weight:700;color:white;padding:4px 9px;border-radius:8px;flex-shrink:0;text-align:center;min-width:52px}
+.stop-title{flex:1}
+.stop-name{font-size:15px;font-weight:700;line-height:1.2}
+.stop-tagline{font-size:12px;color:#8e8e93;margin-top:2px}
+.stop-dur{font-size:11px;color:#8e8e93;flex-shrink:0;text-align:right}
+.chevron{font-size:12px;color:#c7c7cc;margin-left:4px;transition:transform .2s}
+.stop-card.open .chevron{transform:rotate(90deg)}
+
+.stop-body{display:none;padding:0 14px 14px;border-top:1px solid #f2f2f7}
+.stop-card.open .stop-body{display:block}
+
+.stop-addr{font-size:12px;color:#636366;margin-top:10px;display:flex;gap:6px}
+.stop-addr-icon{flex-shrink:0}
+.stop-hrs{display:inline-flex;align-items:center;gap:5px;font-size:12px;margin-top:8px;padding:4px 9px;border-radius:6px;font-weight:600}
+.stop-note{font-size:13px;color:#3a3a3c;margin-top:10px;line-height:1.5}
+.stop-alert{font-size:12px;color:var(--warn-fg);background:var(--warn-bg);border-radius:8px;padding:8px 10px;margin-top:8px;line-height:1.5}
+.stop-alert.resto{color:var(--resto-fg);background:var(--resto-bg)}
+.stop-alert.tea{color:var(--tea-fg);background:var(--tea-bg)}
+
+.maps-btn{display:flex;align-items:center;justify-content:center;gap:6px;background:#007aff;color:white;padding:10px;border-radius:10px;text-decoration:none;font-size:14px;font-weight:600;margin-top:10px;width:100%}
+
+/* Resto/Tea special header */
+.stop-card.resto .stop-time{background:var(--resto-fg)}
+.stop-card.tea .stop-time{background:var(--tea-fg)}
+.stop-card.resto .stop-name{color:var(--resto-fg)}
+.stop-card.tea .stop-name{color:var(--tea-fg)}
+
+/* ── STATUS TRACKER ─────────────────────────────────── */
+.status-bar{display:flex;gap:8px;padding:10px 14px 4px;flex-wrap:wrap}
+.status-btn{flex:1;min-width:0;padding:9px 6px;border-radius:10px;font-size:12px;font-weight:700;border:2px solid;cursor:pointer;text-align:center;transition:all .15s;background:white}
+.status-btn.fait       {border-color:#34c759;color:#34c759}
+.status-btn.fait.on    {background:#34c759;color:white}
+.status-btn.achat      {border-color:#007aff;color:#007aff}
+.status-btn.achat.on   {background:#007aff;color:white}
+.status-btn.nontaille  {border-color:#ff9500;color:#ff9500}
+.status-btn.nontaille.on{background:#ff9500;color:white}
+.status-btn.skip       {border-color:#8e8e93;color:#8e8e93}
+.status-btn.skip.on    {background:#8e8e93;color:white}
+
+.status-badge{position:absolute;top:10px;right:38px;font-size:11px;font-weight:700;padding:3px 8px;border-radius:10px;pointer-events:none}
+.badge-fait      {background:#34c759;color:white}
+.badge-achat     {background:#007aff;color:white}
+.badge-nontaille {background:#ff9500;color:white}
+.badge-skip      {background:#8e8e93;color:white}
+
+.alt-shops-box{margin:10px 0 0;padding:10px 12px;background:#fff8e1;border-radius:10px;border-left:3px solid #ff9500;display:none}
+.alt-shops-box.visible{display:block}
+.alt-shops-box p{font-size:12px;font-weight:700;color:#856404;margin-bottom:6px}
+.alt-shops-box ul{list-style:none;padding:0}
+.alt-shops-box li{font-size:12px;color:#5d4037;padding:3px 0}
+
+.note-row{padding:0 14px 10px}
+.note-input{width:100%;padding:8px 10px;border-radius:8px;border:1.5px solid #e0e0e0;font-size:13px;font-family:inherit;resize:none;height:60px;color:#1c1c1e}
+.note-input:focus{outline:none;border-color:#007aff}
+
+/* done overlay on card header */
+.stop-card.status-fait .stop-header{opacity:.7}
+.stop-card.status-fait .stop-time{background:#34c759 !important}
+.stop-card.status-skip .stop-header{opacity:.45}
+
+</style>
+</head>
+<body>
+
+<div class="app-header">
+  <h1>🗾 Tokyo Shopping — 20 au 24 mars</h1>
+  <p>Hôtel : Kuramae, Taito-ku · Tap sur chaque stop pour les détails</p>
+</div>
+
+<div class="day-nav" id="dayNav">
+  <button class="day-pill ven active" onclick="showDay('ven')">Ven 20</button>
+  <button class="day-pill sam" onclick="showDay('sam')">Sam 21</button>
+  <button class="day-pill dim" onclick="showDay('dim')">Dim 22</button>
+  <button class="day-pill lun" onclick="showDay('lun')">Lun 23</button>
+  <button class="day-pill mar" onclick="showDay('mar')">Mar 24</button>
+</div>
+
+<!-- ═══════════════ VENDREDI 20 ═══════════════ -->
+<div class="day-section visible" id="day-ven">
+  <div class="day-header-bar" style="background:var(--ven)">
+    <h2>📅 Vendredi 20 — Kappabashi</h2>
+    <div class="sub">15h30–18h · à pied depuis l'hôtel (10 min) · ⚠️ Ordre impératif !</div>
+  </div>
+  <div class="route-wrap" style="background:var(--ven-l)">
+    <a class="route-btn" href="https://www.google.com/maps/dir/Tsubaya+Cutlery+Kappabashi/KAKINUMA+KNIVES+KAPPABASHI/Takanojin+Kappabashi/Washin-Dou+Kappabashi/Kama-Asa+Kappabashi/KAMATA+Hakensha/Iidaya+Kappabashi/@35.714,139.789,16z" target="_blank">🧭 Itinéraire Kappabashi</a>
+  </div>
+
+  <div class="trajet-row">🏠 Hôtel Kuramae → Kappabashi : 🚶 10 min à pied</div>
+
+  <div class="stop-card alert" data-sid="tsubaya" onclick="toggle(this)">
+    <div class="stop-header">
+      <span class="stop-time" style="background:var(--ven)">15h30</span>
+      <div class="stop-title"><div class="stop-name">Tsubaya Cutlery ⚡</div><div class="stop-tagline">Couteaux · Institution historique</div></div>
+      <div class="stop-dur">30 min</div><span class="chevron">›</span>
+    </div>
+    <div class="stop-body">
+      <div class="stop-addr"><span class="stop-addr-icon">📍</span>3-7-2 Nishi-Asakusa, Taito-ku</div>
+      <span class="stop-hrs" style="background:var(--ven-l);color:var(--ven)">🕐 10h–17h (tous jours)</span>
+      <div class="stop-note">Institution historique. Propriétaire expert, sélection de forgerons de tout le Japon. Staff anglophone (demander Yuki). 1er stop IMPÉRATIF — ferme à 17h pile.</div>
+      <div class="stop-alert">⚡ FERME 17h — 1er stop obligatoire</div>
+      
+    <div class="status-bar">
+      <button class="status-btn fait" data-status="fait">✅ Fait</button>
+      <button class="status-btn achat" data-status="achat">🛍️ Acheté</button>
+      <button class="status-btn nontaille" data-status="nontaille">📏 Taille ≠</button>
+      <button class="status-btn skip" data-status="skip">⏭️ Skip</button>
+    </div>
+    <div class="alt-shops-box"><p>📦 Produit trouvé mais pas ta taille ? Essaie :</p><ul><li>→ Takanojin (RDC même immeuble)</li><li>→ Washin-Dō (5 min nord)</li><li>→ Kamata Hakensha (3 min sud)</li></ul></div>
+    <div class="note-row"><textarea class="note-input" placeholder="Note rapide... (taille essayée, prix, impression...)"></textarea></div>
+      <a class="maps-btn" href="https://maps.google.com/?cid=1091037879119984366" target="_blank">📍 Ouvrir dans Maps</a>
+    </div>
+  </div>
+
+  <div class="trajet-row">🚶 2 min → Kakinuma (même rue, nord)</div>
+
+  <div class="stop-card alert" data-sid="kakinuma" onclick="toggle(this)">
+    <div class="stop-header">
+      <span class="stop-time" style="background:var(--ven)">15h55</span>
+      <div class="stop-title"><div class="stop-name">Kakinuma Knives ⚡ (2F)</div><div class="stop-tagline">Couteaux luxe · Designs exclusifs</div></div>
+      <div class="stop-dur">20 min</div><span class="chevron">›</span>
+    </div>
+    <div class="stop-body">
+      <div class="stop-addr"><span class="stop-addr-icon">📍</span>3-1-13 Matsugaya, Taito-ku · 2e étage</div>
+      <span class="stop-hrs" style="background:var(--ven-l);color:var(--ven)">🕐 10h30–17h · Fermé lundi</span>
+      <div class="stop-note">Couteaux haut de gamme, designs exclusifs protégés. Art autant qu'outil. Petite boutique confidentielle au 2e étage — pas de vitrine en bas.</div>
+      <div class="stop-alert">⚡ FERME 17h · Fermé le lundi</div>
+      
+    <div class="status-bar">
+      <button class="status-btn fait" data-status="fait">✅ Fait</button>
+      <button class="status-btn achat" data-status="achat">🛍️ Acheté</button>
+      <button class="status-btn nontaille" data-status="nontaille">📏 Taille ≠</button>
+      <button class="status-btn skip" data-status="skip">⏭️ Skip</button>
+    </div>
+    <div class="alt-shops-box"><p>📦 Produit trouvé mais pas ta taille ? Essaie :</p><ul><li>→ Takanojin (RDC même immeuble)</li><li>→ Tsubaya (2 min)</li></ul></div>
+    <div class="note-row"><textarea class="note-input" placeholder="Note rapide... (taille essayée, prix, impression...)"></textarea></div>
+      <a class="maps-btn" href="https://maps.google.com/?cid=1326546899580909761" target="_blank">📍 Ouvrir dans Maps</a>
+    </div>
+  </div>
+
+  <div class="trajet-row">🚶 1 min → Takanojin (RDC même immeuble)</div>
+
+  <div class="stop-card" data-sid="takanojin" onclick="toggle(this)">
+    <div class="stop-header">
+      <span class="stop-time" style="background:var(--ven)">16h15</span>
+      <div class="stop-title"><div class="stop-name">⭐ Takanojin</div><div class="stop-tagline">Couteaux · Note 4.9/5</div></div>
+      <div class="stop-dur">35 min</div><span class="chevron">›</span>
+    </div>
+    <div class="stop-body">
+      <div class="stop-addr"><span class="stop-addr-icon">📍</span>3-1-13 Matsugaya, Taito-ku · RDC</div>
+      <span class="stop-hrs" style="background:var(--ven-l);color:var(--ven)">🕐 10h–18h</span>
+      <div class="stop-note">Note 4.9/5. Staff très pointu sur les aciers (SLD, aogami, shirogami). Essai sur daikon. Excellent rapport qualité/prix. Probablement là que tu achètes ton couteau principal.</div>
+      
+    <div class="status-bar">
+      <button class="status-btn fait" data-status="fait">✅ Fait</button>
+      <button class="status-btn achat" data-status="achat">🛍️ Acheté</button>
+      <button class="status-btn nontaille" data-status="nontaille">📏 Taille ≠</button>
+      <button class="status-btn skip" data-status="skip">⏭️ Skip</button>
+    </div>
+    <div class="alt-shops-box"><p>📦 Produit trouvé mais pas ta taille ? Essaie :</p><ul><li>→ Washin-Dō (5 min nord)</li><li>→ Tsubaya (2 min)</li><li>→ Kamata Hakensha</li></ul></div>
+    <div class="note-row"><textarea class="note-input" placeholder="Note rapide... (taille essayée, prix, impression...)"></textarea></div>
+      <a class="maps-btn" href="https://maps.google.com/?cid=7750502029719575526" target="_blank">📍 Ouvrir dans Maps</a>
+    </div>
+  </div>
+
+  <div class="trajet-row">🚶 5 min vers le nord → Washin-Dō</div>
+
+  <div class="stop-card" data-sid="washindo" onclick="toggle(this)">
+    <div class="stop-header">
+      <span class="stop-time" style="background:var(--ven)">16h45</span>
+      <div class="stop-title"><div class="stop-name">⭐ Washin-Dō</div><div class="stop-tagline">Couteaux · Note 4.9/5 · Même bloc hôtel</div></div>
+      <div class="stop-dur">20 min</div><span class="chevron">›</span>
+    </div>
+    <div class="stop-body">
+      <div class="stop-addr"><span class="stop-addr-icon">📍</span>3-17-5 Matsugaya, Taito-ku</div>
+      <span class="stop-hrs" style="background:var(--ven-l);color:var(--ven)">🕐 10h–18h</span>
+      <div class="stop-note">Note 4.9/5. Aogami/shirogami forgé artisanal. Staff anglophone passionné. Essai sur daikon. Gift wrap offert. Même bloc que l'hôtel.</div>
+      
+    <div class="status-bar">
+      <button class="status-btn fait" data-status="fait">✅ Fait</button>
+      <button class="status-btn achat" data-status="achat">🛍️ Acheté</button>
+      <button class="status-btn nontaille" data-status="nontaille">📏 Taille ≠</button>
+      <button class="status-btn skip" data-status="skip">⏭️ Skip</button>
+    </div>
+    <div class="alt-shops-box"><p>📦 Produit trouvé mais pas ta taille ? Essaie :</p><ul><li>→ Takanojin (8 min sud)</li><li>→ Tsubaya</li></ul></div>
+    <div class="note-row"><textarea class="note-input" placeholder="Note rapide... (taille essayée, prix, impression...)"></textarea></div>
+      <a class="maps-btn" href="https://maps.google.com/?cid=15415754692688383103" target="_blank">📍 Ouvrir dans Maps</a>
+    </div>
+  </div>
+
+  <div class="trajet-row">🚶 8 min vers le sud → Kama-Asa</div>
+
+  <div class="stop-card alert" data-sid="kamaasa" onclick="toggle(this)">
+    <div class="stop-header">
+      <span class="stop-time" style="background:var(--ven)">17h10</span>
+      <div class="stop-title"><div class="stop-name">⭐ Kama-Asa ⚡</div><div class="stop-tagline">Poêles tetsu · Couteaux</div></div>
+      <div class="stop-dur">20 min</div><span class="chevron">›</span>
+    </div>
+    <div class="stop-body">
+      <div class="stop-addr"><span class="stop-addr-icon">📍</span>2-24-1 Matsugaya, Taito-ku</div>
+      <span class="stop-hrs" style="background:var(--ven-l);color:var(--ven)">🕐 11h–17h30</span>
+      <div class="stop-note">Poêles en acier bleu japonais (tetsu), qualité professionnelle. Staff anglophone qui explique l'entretien. C'est ici qu'on achète la poêle.</div>
+      <div class="stop-alert">⚡ FERME 17h30 — 20 min max</div>
+      
+    <div class="status-bar">
+      <button class="status-btn fait" data-status="fait">✅ Fait</button>
+      <button class="status-btn achat" data-status="achat">🛍️ Acheté</button>
+      <button class="status-btn nontaille" data-status="nontaille">📏 Taille ≠</button>
+      <button class="status-btn skip" data-status="skip">⏭️ Skip</button>
+    </div>
+    <div class="alt-shops-box"><p>📦 Produit trouvé mais pas ta taille ? Essaie :</p><ul><li>→ Iidaya (3 min) pour ustensiles</li></ul></div>
+    <div class="note-row"><textarea class="note-input" placeholder="Note rapide... (taille essayée, prix, impression...)"></textarea></div>
+      <a class="maps-btn" href="https://maps.google.com/?cid=17158542540331966183" target="_blank">📍 Ouvrir dans Maps</a>
+    </div>
+  </div>
+
+  <div class="trajet-row">🚶 3 min → Kamata Hakensha</div>
+
+  <div class="stop-card" data-sid="kamata" onclick="toggle(this)">
+    <div class="stop-header">
+      <span class="stop-time" style="background:var(--ven)">17h35</span>
+      <div class="stop-title"><div class="stop-name">Kamata Hakensha</div><div class="stop-tagline">Couteaux · Gravure gratuite</div></div>
+      <div class="stop-dur">20 min</div><span class="chevron">›</span>
+    </div>
+    <div class="stop-body">
+      <div class="stop-addr"><span class="stop-addr-icon">📍</span>2-12-6 Matsugaya, Taito-ku</div>
+      <span class="stop-hrs" style="background:var(--ven-l);color:var(--ven)">🕐 10h–18h</span>
+      <div class="stop-note">4 générations, maître affûteur sur place. Couteaux Honyaki. Gravure gratuite. Tax-free facilité.</div>
+      
+    <div class="status-bar">
+      <button class="status-btn fait" data-status="fait">✅ Fait</button>
+      <button class="status-btn achat" data-status="achat">🛍️ Acheté</button>
+      <button class="status-btn nontaille" data-status="nontaille">📏 Taille ≠</button>
+      <button class="status-btn skip" data-status="skip">⏭️ Skip</button>
+    </div>
+    <div class="alt-shops-box"><p>📦 Produit trouvé mais pas ta taille ? Essaie :</p><ul><li>→ Takanojin · Washin-Dō pour couteaux</li></ul></div>
+    <div class="note-row"><textarea class="note-input" placeholder="Note rapide... (taille essayée, prix, impression...)"></textarea></div>
+      <a class="maps-btn" href="https://maps.google.com/?cid=15974904196836280717" target="_blank">📍 Ouvrir dans Maps</a>
+    </div>
+  </div>
+
+  <div class="trajet-row">🚶 3 min → Iidaya</div>
+
+  <div class="stop-card" data-sid="iidaya" onclick="toggle(this)">
+    <div class="stop-header">
+      <span class="stop-time" style="background:var(--ven)">17h55</span>
+      <div class="stop-title"><div class="stop-name">Iidaya</div><div class="stop-tagline">Ustensiles · Grilles yakiniku</div></div>
+      <div class="stop-dur">5 min</div><span class="chevron">›</span>
+    </div>
+    <div class="stop-body">
+      <div class="stop-addr"><span class="stop-addr-icon">📍</span>2-21-6 Nishi-Asakusa, Taito-ku</div>
+      <span class="stop-hrs" style="background:var(--ven-l);color:var(--ven)">🕐 11h–18h</span>
+      <div class="stop-note">Grilles yakiniku, racks viande, ustensiles pro. Dense et serré — enlever le sac à dos.</div>
+      <div class="stop-alert">5 min avant fermeture → droit à la section yakiniku</div>
+      
+    <div class="status-bar">
+      <button class="status-btn fait" data-status="fait">✅ Fait</button>
+      <button class="status-btn achat" data-status="achat">🛍️ Acheté</button>
+      <button class="status-btn nontaille" data-status="nontaille">📏 Taille ≠</button>
+      <button class="status-btn skip" data-status="skip">⏭️ Skip</button>
+    </div>
+    <div class="alt-shops-box"><p>📦 Produit trouvé mais pas ta taille ? Essaie :</p><ul><li>→ Kitchen World TDI (sam. matin) pour alternatives ustensiles</li></ul></div>
+    <div class="note-row"><textarea class="note-input" placeholder="Note rapide... (taille essayée, prix, impression...)"></textarea></div>
+      <a class="maps-btn" href="https://maps.google.com/?cid=7095331615141652358" target="_blank">📍 Ouvrir dans Maps</a>
+    </div>
+  </div>
+
+  <div class="trajet-row">🚶 10 min → Hôtel Kuramae</div>
+</div>
+
+<!-- ═══════════════ SAMEDI 21 ═══════════════ -->
+<div class="day-section" id="day-sam">
+  <div class="day-header-bar" style="background:var(--sam)">
+    <h2>📅 Samedi 21 — Gunpla + Thé</h2>
+    <div class="sub">10h–18h · Odaiba → Marunouchi (thé) → Akihabara</div>
+  </div>
+  <div class="route-wrap" style="background:var(--sam-l)">
+    <a class="route-btn" href="https://www.google.com/maps/dir/Yodobashi+Akiba/Radio+Kaikan+Akihabara/Otachu+Akihabara+No.4/Mandarake+Complex+Akihabara/Surugaya+Akihabara+Plastic+model/Volks+Akihabara+Hobby+Paradise+2/@35.7,139.771,16z" target="_blank">🧭 Itinéraire Akihabara</a>
+  </div>
+
+  <div class="trajet-row">🚇 Kuramae→Shimbashi (Asakusa, ~12 min) + 🚡 Shimbashi→Odaiba (Yurikamome, ~20 min) = 40 min</div>
+
+  <div class="stop-card alert" data-sid="gundambase" onclick="toggle(this)">
+    <div class="stop-header">
+      <span class="stop-time" style="background:var(--sam)">10h00</span>
+      <div class="stop-title"><div class="stop-name">⭐ Gundam Base Tokyo</div><div class="stop-tagline">DiverCity 7F · Exclusifs</div></div>
+      <div class="stop-dur">1h30</div><span class="chevron">›</span>
+    </div>
+    <div class="stop-body">
+      <div class="stop-addr"><span class="stop-addr-icon">📍</span>DiverCity Tokyo Plaza 7F, 1-1-10 Aomi, Koto-ku</div>
+      <span class="stop-hrs" style="background:var(--sam-l);color:var(--sam)">🕐 Sam/Dim : 10h–21h · Semaine : 11h–20h</span>
+      <div class="stop-note">EXCLUSIFS uniquement disponibles ici : HG Narrative B-Packs, HG Infinite Justice Clear Color, HG Rising Freedom Neon Yellow, HG Mighty Strike Freedom Clear Color. Zone de building + expo + statue Unicorn grandeur réelle.</div>
+      <div class="stop-alert">⚡ Ouvre 10h le WE seulement · ⚠️ Tickets → gundam-base.net</div>
+      
+    <div class="status-bar">
+      <button class="status-btn fait" data-status="fait">✅ Fait</button>
+      <button class="status-btn achat" data-status="achat">🛍️ Acheté</button>
+      <button class="status-btn nontaille" data-status="nontaille">📏 Taille ≠</button>
+      <button class="status-btn skip" data-status="skip">⏭️ Skip</button>
+    </div>
+    
+    <div class="note-row"><textarea class="note-input" placeholder="Note rapide..."></textarea></div>
+      <a class="maps-btn" href="https://maps.google.com/?cid=17893024466751249881" target="_blank">📍 Ouvrir dans Maps</a>
+    </div>
+  </div>
+
+  <div class="trajet-row">🍜 Déjeuner Odaiba (DiverCity, ~45 min) · 🚡 Odaiba→Shimbashi (~20 min) + 🚇 Shimbashi→Tokyo JR (~5 min) + 🚶 5 min = 30 min</div>
+
+  <div class="stop-card tea" data-sid="ippodo" onclick="toggle(this)">
+    <div class="stop-header">
+      <span class="stop-time">12h30</span>
+      <div class="stop-title"><div class="stop-name">🍵 Ippodo Tea Shin-Marunouchi</div><div class="stop-tagline">Thé premium · Cadeaux · Fondé 1717</div></div>
+      <div class="stop-dur">30 min</div><span class="chevron">›</span>
+    </div>
+    <div class="stop-body">
+      <div class="stop-addr"><span class="stop-addr-icon">📍</span>Shin-Marunouchi Building B1F, 1-5-1 Marunouchi, Chiyoda-ku</div>
+      <span class="stop-hrs" style="background:var(--tea-bg);color:var(--tea-fg)">🕐 11h–21h (lun-sam) · 11h–20h (dim)</span>
+      <div class="stop-note">LA référence absolue pour le thé japonais premium (fondée en 1717 à Kyoto). Matcha cérémoniel, gyokuro, sencha. Staff conseil, emballages cadeaux impeccables. Idéal pour des cadeaux premium. ⚠️ Matcha limité à 1 boîte/personne en ce moment (pénurie mondiale).</div>
+      <div class="stop-alert tea">🎁 CADEAUX PREMIUM · Tax-free disponible · Matcha limité 1 boîte/pers.</div>
+      
+    <div class="status-bar">
+      <button class="status-btn fait" data-status="fait">✅ Fait</button>
+      <button class="status-btn achat" data-status="achat">🛍️ Acheté</button>
+      <button class="status-btn nontaille" data-status="nontaille">📏 Taille ≠</button>
+      <button class="status-btn skip" data-status="skip">⏭️ Skip</button>
+    </div>
+    <div class="alt-shops-box"><p>📦 Produit trouvé mais pas ta taille ? Essaie :</p><ul><li>→ JuGetsuDo Tsukiji (même ligne JR) · Senchado Ginza</li></ul></div>
+    <div class="note-row"><textarea class="note-input" placeholder="Note rapide... (taille essayée, prix, impression...)"></textarea></div>
+      <a class="maps-btn" href="https://maps.google.com/?cid=3570374217543073042" target="_blank">📍 Ouvrir dans Maps</a>
+    </div>
+  </div>
+
+
+  <div class="trajet-row">🚶 8 min → Stumptown Ginza (ou 🚇 Yurakucho→Ginza, 1 station)</div>
+
+  <div class="stop-card" data-sid="stumptown" onclick="toggle(this)">
+    <div class="stop-header">
+      <span class="stop-time" style="background:var(--sam)">13h05</span>
+      <div class="stop-title"><div class="stop-name">⭐ Stumptown Ginza</div><div class="stop-tagline">Danner · White's Boots · Japan-only</div></div>
+      <div class="stop-dur">40 min</div><span class="chevron">›</span>
+    </div>
+    <div class="stop-body">
+      <div class="stop-addr"><span class="stop-addr-icon">📍</span>2-3-7 Ginza, Chuo-ku (3F)</div>
+      <span class="stop-hrs" style="background:var(--sam-l);color:var(--sam)">🕐 11h–20h (tous jours)</span>
+      <div class="stop-note">Exclusivités Japan-only introuvables en Europe : Danner Light en cordovan shell, Engineer Boots Horween Chromexcel, chukka faits main au Japon. Staff anglophone très disponible. Meilleure boutique pour les étrangers (4.0 vs 3.6 Shibuya). Commandes custom White's acceptées.</div>
+      <div class="status-bar">
+        <button class="status-btn fait" data-status="fait">✅ Fait</button>
+        <button class="status-btn achat" data-status="achat">🛍️ Acheté</button>
+        <button class="status-btn nontaille" data-status="nontaille">📏 Taille ≠</button>
+        <button class="status-btn skip" data-status="skip">⏭️ Skip</button>
+      </div>
+      <div class="alt-shops-box"><p>📦 Pas ta taille ? Essaie :</p><ul><li>→ Stumptown Shibuya (1-11 Jinnan, 2F au-dessus ABC Mart)</li></ul></div>
+      <div class="note-row"><textarea class="note-input" placeholder="Note rapide... (taille, modèle essayé, prix...)"></textarea></div>
+      <a class="maps-btn" href="https://maps.google.com/?cid=8538286285659488100" target="_blank">📍 Ouvrir dans Maps</a>
+    </div>
+  </div>
+
+  <div class="trajet-row">🚇 Ginza→Akihabara (Hibiya line, ~8 min)</div>
+
+  <div class="stop-card" data-sid="yodobashi" onclick="toggle(this)">
+    <div class="stop-header">
+      <span class="stop-time" style="background:var(--sam)">14h00</span>
+      <div class="stop-title"><div class="stop-name">Yodobashi Akiba (6F)</div><div class="stop-tagline">Gunpla catalogue · Outils</div></div>
+      <div class="stop-dur">45 min</div><span class="chevron">›</span>
+    </div>
+    <div class="stop-body">
+      <div class="stop-addr"><span class="stop-addr-icon">📍</span>1-1 Kanda-Hanaokachō, Chiyoda-ku</div>
+      <span class="stop-hrs" style="background:var(--sam-l);color:var(--sam)">🕐 9h30–22h</span>
+      <div class="stop-note">Gunpla au prix catalogue. Meilleure sélection outils hobby de Tokyo. Builds exposés par designer officiel NAOKI. 6e étage.</div>
+      
+    <div class="status-bar">
+      <button class="status-btn fait" data-status="fait">✅ Fait</button>
+      <button class="status-btn achat" data-status="achat">🛍️ Acheté</button>
+      <button class="status-btn nontaille" data-status="nontaille">📏 Taille ≠</button>
+      <button class="status-btn skip" data-status="skip">⏭️ Skip</button>
+    </div>
+    <div class="alt-shops-box"><p>📦 Produit trouvé mais pas ta taille ? Essaie :</p><ul><li>→ Radio Kaikan (5 min) · Bic Camera (5 min)</li></ul></div>
+    <div class="note-row"><textarea class="note-input" placeholder="Note rapide... (taille essayée, prix, impression...)"></textarea></div>
+      <a class="maps-btn" href="https://maps.google.com/?cid=8915183078415758198" target="_blank">📍 Ouvrir dans Maps</a>
+    </div>
+  </div>
+
+  <div class="trajet-row">🚶 5 min → Radio Kaikan</div>
+
+  <div class="stop-card" data-sid="radiokaikan" onclick="toggle(this)">
+    <div class="stop-header">
+      <span class="stop-time" style="background:var(--sam)">14h05</span>
+      <div class="stop-title"><div class="stop-name">Radio Kaikan</div><div class="stop-tagline">Multi-boutiques · AmiAmi · Volks</div></div>
+      <div class="stop-dur">40 min</div><span class="chevron">›</span>
+    </div>
+    <div class="stop-body">
+      <div class="stop-addr"><span class="stop-addr-icon">📍</span>1-15-16 Sotokanda, Chiyoda-ku</div>
+      <span class="stop-hrs" style="background:var(--sam-l);color:var(--sam)">🕐 10h–20h</span>
+      <div class="stop-note">AmiAmi 4F (remises kits récents) · Yellow Submarine 6F (runners ¥50, kitbash) · Volks 8F (meilleurs outils du bâtiment) · Lashinbang 5F · Akiba X 5F (aftermarket). ⚠️ Achats payés par étage.</div>
+      
+    <div class="status-bar">
+      <button class="status-btn fait" data-status="fait">✅ Fait</button>
+      <button class="status-btn achat" data-status="achat">🛍️ Acheté</button>
+      <button class="status-btn nontaille" data-status="nontaille">📏 Taille ≠</button>
+      <button class="status-btn skip" data-status="skip">⏭️ Skip</button>
+    </div>
+    <div class="alt-shops-box"><p>📦 Produit trouvé mais pas ta taille ? Essaie :</p><ul><li>→ Yodobashi Akiba · Volks Hobby Paradise 2</li></ul></div>
+    <div class="note-row"><textarea class="note-input" placeholder="Note rapide... (taille essayée, prix, impression...)"></textarea></div>
+      <a class="maps-btn" href="https://maps.google.com/?cid=3516513028144054760" target="_blank">📍 Ouvrir dans Maps</a>
+    </div>
+  </div>
+
+  <div class="trajet-row">🚶 2 min → Otachu</div>
+
+  <div class="stop-card" data-sid="otachu" onclick="toggle(this)">
+    <div class="stop-header">
+      <span class="stop-time" style="background:var(--sam)">14h50</span>
+      <div class="stop-title"><div class="stop-name">⭐ Otachu No.4 (7F)</div><div class="stop-tagline">P-Bandai · Ultra-rares · Note 4.6/5</div></div>
+      <div class="stop-dur">40 min</div><span class="chevron">›</span>
+    </div>
+    <div class="stop-body">
+      <div class="stop-addr"><span class="stop-addr-icon">📍</span>7F, 1-15-9 Sotokanda, Chiyoda-ku</div>
+      <span class="stop-hrs" style="background:var(--sam-l);color:var(--sam)">🕐 11h–20h</span>
+      <div class="stop-note">+7000 références Gundam uniquement. P-Bandai, Metal Build, MGEX. Grails : MG Deep Striker, RG Phenex Narrative, RG Zeta Biosensor, MG Sinanju Stein Narrative Ver.Ka.</div>
+      
+    <div class="status-bar">
+      <button class="status-btn fait" data-status="fait">✅ Fait</button>
+      <button class="status-btn achat" data-status="achat">🛍️ Acheté</button>
+      <button class="status-btn nontaille" data-status="nontaille">📏 Taille ≠</button>
+      <button class="status-btn skip" data-status="skip">⏭️ Skip</button>
+    </div>
+    <div class="alt-shops-box"><p>📦 Produit trouvé mais pas ta taille ? Essaie :</p><ul><li>→ Mandarake Complex (4 min) · Surugaya (3 min)</li></ul></div>
+    <div class="note-row"><textarea class="note-input" placeholder="Note rapide... (taille essayée, prix, impression...)"></textarea></div>
+      <a class="maps-btn" href="https://maps.google.com/?cid=11537538503966508323" target="_blank">📍 Ouvrir dans Maps</a>
+    </div>
+  </div>
+
+  <div class="trajet-row">🚶 4 min → Mandarake</div>
+
+  <div class="stop-card" data-sid="mandarake" onclick="toggle(this)">
+    <div class="stop-header">
+      <span class="stop-time" style="background:var(--sam)">15h35</span>
+      <div class="stop-title"><div class="stop-name">Mandarake Complex ⚡</div><div class="stop-tagline">Occasion · Grails</div></div>
+      <div class="stop-dur">40 min</div><span class="chevron">›</span>
+    </div>
+    <div class="stop-body">
+      <div class="stop-addr"><span class="stop-addr-icon">📍</span>3-11-12 Sotokanda, Chiyoda-ku</div>
+      <span class="stop-hrs" style="background:var(--sam-l);color:var(--sam)">🕐 12h–20h</span>
+      <div class="stop-note">Occasion multi-étages. 3F et 4F model kits. Grails : MG Perfect Zeong, MG Deep Striker, P-Bandai rares. Selon arrivage. ⚠️ Achats payés par étage.</div>
+      <div class="stop-alert">⚡ Ouvre 12h seulement</div>
+      
+    <div class="status-bar">
+      <button class="status-btn fait" data-status="fait">✅ Fait</button>
+      <button class="status-btn achat" data-status="achat">🛍️ Acheté</button>
+      <button class="status-btn nontaille" data-status="nontaille">📏 Taille ≠</button>
+      <button class="status-btn skip" data-status="skip">⏭️ Skip</button>
+    </div>
+    <div class="alt-shops-box"><p>📦 Produit trouvé mais pas ta taille ? Essaie :</p><ul><li>→ Surugaya (3 min) · Otachu (4 min)</li></ul></div>
+    <div class="note-row"><textarea class="note-input" placeholder="Note rapide... (taille essayée, prix, impression...)"></textarea></div>
+      <a class="maps-btn" href="https://maps.google.com/?cid=10111561495947615187" target="_blank">📍 Ouvrir dans Maps</a>
+    </div>
+  </div>
+
+  <div class="trajet-row">🚶 3 min → Surugaya</div>
+
+  <div class="stop-card" data-sid="surugaya" onclick="toggle(this)">
+    <div class="stop-header">
+      <span class="stop-time" style="background:var(--sam)">16h20</span>
+      <div class="stop-title"><div class="stop-name">Surugaya Plastic Model</div><div class="stop-tagline">Occasion · P-Bandai OOP</div></div>
+      <div class="stop-dur">30 min</div><span class="chevron">›</span>
+    </div>
+    <div class="stop-body">
+      <div class="stop-addr"><span class="stop-addr-icon">📍</span>4-4-2 Sotokanda, Chiyoda-ku (2F·3F)</div>
+      <span class="stop-hrs" style="background:var(--sam-l);color:var(--sam)">🕐 11h–21h</span>
+      <div class="stop-note">Grand revendeur occasion. Bon stock P-Bandai et kits OOP. Fort taux de rotation.</div>
+      
+    <div class="status-bar">
+      <button class="status-btn fait" data-status="fait">✅ Fait</button>
+      <button class="status-btn achat" data-status="achat">🛍️ Acheté</button>
+      <button class="status-btn nontaille" data-status="nontaille">📏 Taille ≠</button>
+      <button class="status-btn skip" data-status="skip">⏭️ Skip</button>
+    </div>
+    <div class="alt-shops-box"><p>📦 Produit trouvé mais pas ta taille ? Essaie :</p><ul><li>→ Mandarake · Otachu</li></ul></div>
+    <div class="note-row"><textarea class="note-input" placeholder="Note rapide... (taille essayée, prix, impression...)"></textarea></div>
+      <a class="maps-btn" href="https://maps.google.com/?cid=13980701760950420025" target="_blank">📍 Ouvrir dans Maps</a>
+    </div>
+  </div>
+
+  <div class="trajet-row">🚶 2 min → Volks</div>
+
+  <div class="stop-card" data-sid="volks" onclick="toggle(this)">
+    <div class="stop-header">
+      <span class="stop-time" style="background:var(--sam)">16h55</span>
+      <div class="stop-title"><div class="stop-name">Volks Hobby Paradise 2</div><div class="stop-tagline">Meilleurs outils Tokyo · 3F</div></div>
+      <div class="stop-dur">35 min</div><span class="chevron">›</span>
+    </div>
+    <div class="stop-body">
+      <div class="stop-addr"><span class="stop-addr-icon">📍</span>4-2-10 Sotokanda, Chiyoda-ku</div>
+      <span class="stop-hrs" style="background:var(--sam-l);color:var(--sam)">🕐 11h–20h</span>
+      <div class="stop-note">3F : meilleur rayon outils hobby de Tokyo (nippers God Hand, peintures, panneaux, outils motorisés, loupes). 4F : neuf + occasion + pièces à l'unité.</div>
+      
+    <div class="status-bar">
+      <button class="status-btn fait" data-status="fait">✅ Fait</button>
+      <button class="status-btn achat" data-status="achat">🛍️ Acheté</button>
+      <button class="status-btn nontaille" data-status="nontaille">📏 Taille ≠</button>
+      <button class="status-btn skip" data-status="skip">⏭️ Skip</button>
+    </div>
+    <div class="alt-shops-box"><p>📦 Produit trouvé mais pas ta taille ? Essaie :</p><ul><li>→ Radio Kaikan 8F · TamTam (2 min)</li></ul></div>
+    <div class="note-row"><textarea class="note-input" placeholder="Note rapide... (taille essayée, prix, impression...)"></textarea></div>
+      <a class="maps-btn" href="https://maps.google.com/?cid=13289987719519484499" target="_blank">📍 Ouvrir dans Maps</a>
+    </div>
+  </div>
+
+  <div class="trajet-row">🚇 Akihabara→Kuramae (~15 min, Hibiya line)</div>
+</div>
+
+<!-- ═══════════════ DIMANCHE 22 ═══════════════ -->
+<div class="day-section" id="day-dim">
+  <div class="day-header-bar" style="background:var(--dim)">
+    <h2>📅 Dimanche 22 — Mode + Pachon</h2>
+    <div class="sub">11h–18h · ⚠️ Pachon 12h Daikanyama · Momotaro retouches</div>
+  </div>
+  <div class="route-wrap" style="background:var(--dim-l)">
+    <a class="route-btn" href="https://www.google.com/maps/dir/GR8+Harajuku/Adidas+Originals+Harajuku/Restaurant+Pachon+Daikanyama/LHP+Harajuku/CONZ+Harajuku/STUDIOUS+Harajuku/BEAMS+Harajuku/Chikashitsu+Tokyo/AMOMENTO+TOKYO+FLAGSHIP/MOMOTARO+JEANS+Aoyama/visvim+GYRE+Omotesando/PORTER+Omotesando/Yohji+Yamamoto+Aoyama/WTAPS+W_Lab/PORTER+EXCHANGE+SHIBUYA/PUBLIC+TOKYO/@35.66,139.706,14z" target="_blank">🧭 Itinéraire Mode complet</a>
+  </div>
+
+  <div class="trajet-row">🚇 Kuramae→Meiji-Jingumae (Chiyoda line, ~22 min)</div>
+
+  <div class="stop-card" data-sid="gr8" onclick="toggle(this)">
+    <div class="stop-header">
+      <span class="stop-time" style="background:var(--dim)">11h00</span>
+      <div class="stop-title"><div class="stop-name">GR8</div><div class="stop-tagline">Luxury streetwear · Cat Street</div></div>
+      <div class="stop-dur">25 min</div><span class="chevron">›</span>
+    </div>
+    <div class="stop-body">
+      <div class="stop-addr"><span class="stop-addr-icon">📍</span>1-11-6 Jingumae, Shibuya-ku (2.5F)</div>
+      <span class="stop-hrs" style="background:var(--dim-l);color:var(--dim)">🕐 11h–20h</span>
+      <div class="stop-note">Luxury streetwear pointu : Mihara Yasuhiro, READYMADE. Seul à ouvrir à 11h. Petite boutique, rapide.</div>
+      
+    <div class="status-bar">
+      <button class="status-btn fait" data-status="fait">✅ Fait</button>
+      <button class="status-btn achat" data-status="achat">🛍️ Acheté</button>
+      <button class="status-btn nontaille" data-status="nontaille">📏 Taille ≠</button>
+      <button class="status-btn skip" data-status="skip">⏭️ Skip</button>
+    </div>
+    <div class="alt-shops-box"><p>📦 Produit trouvé mais pas ta taille ? Essaie :</p><ul><li>→ LHP Harajuku (5 min) · Chikashitsu+Tokyo</li></ul></div>
+    <div class="note-row"><textarea class="note-input" placeholder="Note rapide... (taille essayée, prix, impression...)"></textarea></div>
+      <a class="maps-btn" href="https://maps.google.com/?cid=14748545559255114070" target="_blank">📍 Ouvrir dans Maps</a>
+    </div>
+  </div>
+
+  <div class="trajet-row">🚶 5 min → Adidas Originals</div>
+
+  <div class="stop-card alert" data-sid="adidas" onclick="toggle(this)">
+    <div class="stop-header">
+      <span class="stop-time" style="background:var(--dim)">11h25</span>
+      <div class="stop-title"><div class="stop-name">⭐ Adidas Originals Harajuku</div><div class="stop-tagline">Flagship multi-étages · Custom print</div></div>
+      <div class="stop-dur">25 min</div><span class="chevron">›</span>
+    </div>
+    <div class="stop-body">
+      <div class="stop-addr"><span class="stop-addr-icon">📍</span>5-17-4 Jingumae, Shibuya-ku</div>
+      <span class="stop-hrs" style="background:var(--dim-l);color:var(--dim)">🕐 11h–20h</span>
+      <div class="stop-note">Flagship multi-étages. Custom print sur T-shirt (+¥500, limite 1 noir / 2 blancs). Exclusivités Japon. Staff anglophone.</div>
+      <div class="stop-alert">⚠️ PAS de tax-free (confirmé)</div>
+      
+    <div class="status-bar">
+      <button class="status-btn fait" data-status="fait">✅ Fait</button>
+      <button class="status-btn achat" data-status="achat">🛍️ Acheté</button>
+      <button class="status-btn nontaille" data-status="nontaille">📏 Taille ≠</button>
+      <button class="status-btn skip" data-status="skip">⏭️ Skip</button>
+    </div>
+    
+    <div class="note-row"><textarea class="note-input" placeholder="Note rapide... (taille essayée, prix, impression...)"></textarea></div>
+      <a class="maps-btn" href="https://maps.google.com/?cid=18302753617813037070" target="_blank">📍 Ouvrir dans Maps</a>
+    </div>
+  </div>
+
+  <div class="trajet-row">🚇 Meiji-Jingumae→Daikanyama (~12 min, Chiyoda→Tokyu Toyoko) · ou 🚕 taxi ~10 min</div>
+
+  <div class="stop-card resto" data-sid="pachon" onclick="toggle(this)">
+    <div class="stop-header">
+      <span class="stop-time">12h00</span>
+      <div class="stop-title"><div class="stop-name">🍽️ Restaurant PACHON</div><div class="stop-tagline">Français · Daikanyama · Réservation ✅</div></div>
+      <div class="stop-dur">1h45</div><span class="chevron">›</span>
+    </div>
+    <div class="stop-body">
+      <div class="stop-addr"><span class="stop-addr-icon">📍</span>29-18 Sarugakucho, Shibuya-ku (Hillside Terrace B)</div>
+      <span class="stop-hrs" style="background:var(--resto-bg);color:var(--resto-fg)">🕐 Dim : 11h30–15h · 18h–22h30</span>
+      <div class="stop-note">Restaurant français institution à Tokyo depuis des décennies. Cuisine Occitanie : cassoulet réputé, chariot de desserts, cheminée française de 300 ans. Clientèle incluant anciens Premiers Ministres. Prix ~¥15 000–20 000/pers déjeuner.</div>
+      <div class="stop-alert resto">✅ Réservation 12h confirmée · Même quartier qu'OAO Haus (lundi)</div>
+      
+    <div class="status-bar">
+      <button class="status-btn fait" data-status="fait">✅ Fait</button>
+      <button class="status-btn achat" data-status="achat">🛍️ Acheté</button>
+      <button class="status-btn nontaille" data-status="nontaille">📏 Taille ≠</button>
+      <button class="status-btn skip" data-status="skip">⏭️ Skip</button>
+    </div>
+    
+    <div class="note-row"><textarea class="note-input" placeholder="Note rapide... (taille essayée, prix, impression...)"></textarea></div>
+      <a class="maps-btn" href="https://maps.google.com/?cid=5081895289614827304" target="_blank">📍 Ouvrir dans Maps</a>
+    </div>
+  </div>
+
+  <div class="trajet-row">🚇 Daikanyama→Meiji-Jingumae (~10 min, Tokyu Toyoko→Chiyoda)</div>
+
+  <div class="stop-card" data-sid="lhp" onclick="toggle(this)">
+    <div class="stop-header">
+      <span class="stop-time" style="background:var(--dim)">14h00</span>
+      <div class="stop-title"><div class="stop-name">LHP Harajuku</div><div class="stop-tagline">Streetwear · Denim · Cuir</div></div>
+      <div class="stop-dur">25 min</div><span class="chevron">›</span>
+    </div>
+    <div class="stop-body">
+      <div class="stop-addr"><span class="stop-addr-icon">📍</span>4-32-12 Jingumae, Shibuya-ku</div>
+      <span class="stop-hrs" style="background:var(--dim-l);color:var(--dim)">🕐 11h30–20h30</span>
+      <div class="stop-note">Select shop streetwear/mode japonaise. Staff attentionné. Bon stock denim et cuir.</div>
+      
+    <div class="status-bar">
+      <button class="status-btn fait" data-status="fait">✅ Fait</button>
+      <button class="status-btn achat" data-status="achat">🛍️ Acheté</button>
+      <button class="status-btn nontaille" data-status="nontaille">📏 Taille ≠</button>
+      <button class="status-btn skip" data-status="skip">⏭️ Skip</button>
+    </div>
+    <div class="alt-shops-box"><p>📦 Produit trouvé mais pas ta taille ? Essaie :</p><ul><li>→ CONZ Harajuku (2 min) · Studious (1 min)</li></ul></div>
+    <div class="note-row"><textarea class="note-input" placeholder="Note rapide... (taille essayée, prix, impression...)"></textarea></div>
+      <a class="maps-btn" href="https://maps.google.com/?cid=3228032515474292792" target="_blank">📍 Ouvrir dans Maps</a>
+    </div>
+  </div>
+
+  <div class="trajet-row">🚶 2 min → CONZ</div>
+
+  <div class="stop-card" data-sid="conz" onclick="toggle(this)">
+    <div class="stop-header">
+      <span class="stop-time" style="background:var(--dim)">14h25</span>
+      <div class="stop-title"><div class="stop-name">CONZ Harajuku</div><div class="stop-tagline">Marka · NVRFRGT · Note 4.8/5</div></div>
+      <div class="stop-dur">20 min</div><span class="chevron">›</span>
+    </div>
+    <div class="stop-body">
+      <div class="stop-addr"><span class="stop-addr-icon">📍</span>4-26-28 Jingumae, Shibuya-ku (SUPACAZ Bldg)</div>
+      <span class="stop-hrs" style="background:var(--dim-l);color:var(--dim)">🕐 12h–20h</span>
+      <div class="stop-note">Select shop japonais pointu : Marka (jackets, two-tuck trousers), NVRFRGT. Staff stylé et disponible. Note 4.8/5.</div>
+      
+    <div class="status-bar">
+      <button class="status-btn fait" data-status="fait">✅ Fait</button>
+      <button class="status-btn achat" data-status="achat">🛍️ Acheté</button>
+      <button class="status-btn nontaille" data-status="nontaille">📏 Taille ≠</button>
+      <button class="status-btn skip" data-status="skip">⏭️ Skip</button>
+    </div>
+    <div class="alt-shops-box"><p>📦 Produit trouvé mais pas ta taille ? Essaie :</p><ul><li>→ LHP · Studious · Beams Harajuku</li></ul></div>
+    <div class="note-row"><textarea class="note-input" placeholder="Note rapide... (taille essayée, prix, impression...)"></textarea></div>
+      <a class="maps-btn" href="https://maps.google.com/?cid=1510581952594922969" target="_blank">📍 Ouvrir dans Maps</a>
+    </div>
+  </div>
+
+  <div class="trajet-row">🚶 1 min → STUDIOUS</div>
+
+  <div class="stop-card" data-sid="studious" onclick="toggle(this)">
+    <div class="stop-header">
+      <span class="stop-time" style="background:var(--dim)">14h45</span>
+      <div class="stop-title"><div class="stop-name">STUDIOUS Harajuku</div><div class="stop-tagline">Made in Japan quality</div></div>
+      <div class="stop-dur">20 min</div><span class="chevron">›</span>
+    </div>
+    <div class="stop-body">
+      <div class="stop-addr"><span class="stop-addr-icon">📍</span>4-26-32 Jingumae, Shibuya-ku</div>
+      <span class="stop-hrs" style="background:var(--dim-l);color:var(--dim)">🕐 12h–20h</span>
+      <div class="stop-note">Made in Japan quality. Certains avis signalent un staff commercial agressif — garder le cap.</div>
+      
+    <div class="status-bar">
+      <button class="status-btn fait" data-status="fait">✅ Fait</button>
+      <button class="status-btn achat" data-status="achat">🛍️ Acheté</button>
+      <button class="status-btn nontaille" data-status="nontaille">📏 Taille ≠</button>
+      <button class="status-btn skip" data-status="skip">⏭️ Skip</button>
+    </div>
+    <div class="alt-shops-box"><p>📦 Produit trouvé mais pas ta taille ? Essaie :</p><ul><li>→ CONZ · Beams Harajuku (3 min)</li></ul></div>
+    <div class="note-row"><textarea class="note-input" placeholder="Note rapide... (taille essayée, prix, impression...)"></textarea></div>
+      <a class="maps-btn" href="https://maps.google.com/?cid=3570716451834617886" target="_blank">📍 Ouvrir dans Maps</a>
+    </div>
+  </div>
+
+  <div class="trajet-row">🚶 3 min → BEAMS</div>
+
+  <div class="stop-card" data-sid="beams" onclick="toggle(this)">
+    <div class="stop-header">
+      <span class="stop-time" style="background:var(--dim)">15h05</span>
+      <div class="stop-title"><div class="stop-name">BEAMS Harajuku</div><div class="stop-tagline">Grand select shop · Beams Plus</div></div>
+      <div class="stop-dur">25 min</div><span class="chevron">›</span>
+    </div>
+    <div class="stop-body">
+      <div class="stop-addr"><span class="stop-addr-icon">📍</span>3-24-7 Jingumae, Shibuya-ku</div>
+      <span class="stop-hrs" style="background:var(--dim-l);color:var(--dim)">🕐 12h–20h (dim)</span>
+      <div class="stop-note">Beams Plus (workwear/Americana), Beams T (graphics), mode japonaise. Grand select shop multi-niveaux.</div>
+      
+    <div class="status-bar">
+      <button class="status-btn fait" data-status="fait">✅ Fait</button>
+      <button class="status-btn achat" data-status="achat">🛍️ Acheté</button>
+      <button class="status-btn nontaille" data-status="nontaille">📏 Taille ≠</button>
+      <button class="status-btn skip" data-status="skip">⏭️ Skip</button>
+    </div>
+    <div class="alt-shops-box"><p>📦 Produit trouvé mais pas ta taille ? Essaie :</p><ul><li>→ Studious · CONZ · LHP</li></ul></div>
+    <div class="note-row"><textarea class="note-input" placeholder="Note rapide... (taille essayée, prix, impression...)"></textarea></div>
+      <a class="maps-btn" href="https://maps.google.com/?cid=13057090885856371969" target="_blank">📍 Ouvrir dans Maps</a>
+    </div>
+  </div>
+
+
+  <div class="trajet-row">🚶 3 min → @cosme TOKYO</div>
+
+  <div class="stop-card" data-sid="cosme" onclick="toggle(this)">
+    <div class="stop-header">
+      <span class="stop-time" style="background:var(--dim)">15h30</span>
+      <div class="stop-title"><div class="stop-name">💄 @cosme TOKYO</div><div class="stop-tagline">Skincare japonaise · Bestsellers · Tax-free</div></div>
+      <div class="stop-dur">25 min</div><span class="chevron">›</span>
+    </div>
+    <div class="stop-body">
+      <div class="stop-addr"><span class="stop-addr-icon">📍</span>1-14-27 Jingumae, Shibuya-ku (Harajuku)</div>
+      <span class="stop-hrs" style="background:var(--dim-l);color:var(--dim)">🕐 11h–21h</span>
+      <div class="stop-note">Meilleur endroit pour la skincare japonaise en un seul stop : bestsellers élus par les utilisateurs japonais, produits exclusifs Tokyo, possibilité de tester avant d'acheter. Cadeaux premium japonais (Hatomugi, Melano CC, Rohto, SK-II, Kose...). Tax-free dès ¥5 000. Télécharger l'app @cosme pour remise à la 1ère utilisation.</div>
+      <div class="stop-alert">Tax-free ✅ dès ¥5 000 · Passeport obligatoire</div>
+      <div class="status-bar">
+        <button class="status-btn fait" data-status="fait">✅ Fait</button>
+        <button class="status-btn achat" data-status="achat">🛍️ Acheté</button>
+        <button class="status-btn nontaille" data-status="nontaille">📏 Taille ≠</button>
+        <button class="status-btn skip" data-status="skip">⏭️ Skip</button>
+      </div>
+      <div class="note-row"><textarea class="note-input" placeholder="Produits repérés, prix..."></textarea></div>
+      <a class="maps-btn" href="https://maps.google.com/?cid=14744940462534553450" target="_blank">📍 Ouvrir dans Maps</a>
+    </div>
+  </div>
+
+
+  <div class="trajet-row">🚶 8 min vers le sud → Chikashitsu</div>
+
+  <div class="stop-card" data-sid="chikashitsu" onclick="toggle(this)">
+    <div class="stop-header">
+      <span class="stop-time" style="background:var(--dim)">16h05</span>
+      <div class="stop-title"><div class="stop-name">Chikashitsu+Tokyo</div><div class="stop-tagline">Underground · Marques niche</div></div>
+      <div class="stop-dur">20 min</div><span class="chevron">›</span>
+    </div>
+    <div class="stop-body">
+      <div class="stop-addr"><span class="stop-addr-icon">📍</span>6-28-4 Jingumae, Shibuya-ku (B1A)</div>
+      <span class="stop-hrs" style="background:var(--dim-l);color:var(--dim)">🕐 12h–20h</span>
+      <div class="stop-note">Select shop underground, marques niche. Silhouettes ~¥10 000. En sous-sol.</div>
+      
+    <div class="status-bar">
+      <button class="status-btn fait" data-status="fait">✅ Fait</button>
+      <button class="status-btn achat" data-status="achat">🛍️ Acheté</button>
+      <button class="status-btn nontaille" data-status="nontaille">📏 Taille ≠</button>
+      <button class="status-btn skip" data-status="skip">⏭️ Skip</button>
+    </div>
+    <div class="alt-shops-box"><p>📦 Produit trouvé mais pas ta taille ? Essaie :</p><ul><li>→ CONZ Harajuku · LHP</li></ul></div>
+    <div class="note-row"><textarea class="note-input" placeholder="Note rapide... (taille essayée, prix, impression...)"></textarea></div>
+      <a class="maps-btn" href="https://maps.google.com/?cid=11983971565707767720" target="_blank">📍 Ouvrir dans Maps</a>
+    </div>
+  </div>
+
+  <div class="trajet-row">🚶 5 min → Amomento (Kita-Aoyama)</div>
+
+  <div class="stop-card" data-sid="amomento" onclick="toggle(this)">
+    <div class="stop-header">
+      <span class="stop-time" style="background:var(--dim)">16h30</span>
+      <div class="stop-title"><div class="stop-name">AMOMENTO Flagship</div><div class="stop-tagline">Coréen-japonais · Unisexe épuré</div></div>
+      <div class="stop-dur">25 min</div><span class="chevron">›</span>
+    </div>
+    <div class="stop-body">
+      <div class="stop-addr"><span class="stop-addr-icon">📍</span>5-49-9 Jingumae, Shibuya-ku (Kita-Aoyama)</div>
+      <span class="stop-hrs" style="background:var(--dim-l);color:var(--dim)">🕐 12h–20h</span>
+      <div class="stop-note">Flagship coréen-japonais, mode unisexe épurée. Concept store 3 niveaux. Sur le trajet vers Momotaro.</div>
+      
+    <div class="status-bar">
+      <button class="status-btn fait" data-status="fait">✅ Fait</button>
+      <button class="status-btn achat" data-status="achat">🛍️ Acheté</button>
+      <button class="status-btn nontaille" data-status="nontaille">📏 Taille ≠</button>
+      <button class="status-btn skip" data-status="skip">⏭️ Skip</button>
+    </div>
+    <div class="alt-shops-box"><p>📦 Produit trouvé mais pas ta taille ? Essaie :</p><ul><li>→ Chikashitsu+Tokyo · Visvim GYRE</li></ul></div>
+    <div class="note-row"><textarea class="note-input" placeholder="Note rapide... (taille essayée, prix, impression...)"></textarea></div>
+      <a class="maps-btn" href="https://maps.google.com/?cid=3194423539331633568" target="_blank">📍 Ouvrir dans Maps</a>
+    </div>
+  </div>
+
+  <div class="trajet-row">🚶 8 min → Momotaro Jeans Aoyama (AO Building 2F)</div>
+
+  <div class="stop-card alert" data-sid="momotaro" onclick="toggle(this)">
+    <div class="stop-header">
+      <span class="stop-time" style="background:var(--dim)">17h00</span>
+      <div class="stop-title"><div class="stop-name">⭐ MOMOTARO JEANS Aoyama</div><div class="stop-tagline">Denim premium · Retouches ~45 min</div></div>
+      <div class="stop-dur">60 min</div><span class="chevron">›</span>
+    </div>
+    <div class="stop-body">
+      <div class="stop-addr"><span class="stop-addr-icon">📍</span>3-11-7 Kita-Aoyama, Minato-ku (AO Building 2F)</div>
+      <span class="stop-hrs" style="background:var(--dim-l);color:var(--dim)">🕐 11h–20h</span>
+      <div class="stop-note">Denim japonais premium. Staff anglophone (Mai recommandée). Donner le jean en retouche EN ARRIVANT et prendre le ticket. Pendant l'attente (30-45 min) → faire Visvim et Porter. Possible file d'attente 15-30 min pour entrer.</div>
+      <div class="stop-alert">⚠️ File possible 15-30 min · Retouches 30-45 min · Donner jean dès l'entrée · Faire Visvim+Porter pendant l'attente</div>
+      
+    <div class="status-bar">
+      <button class="status-btn fait" data-status="fait">✅ Fait</button>
+      <button class="status-btn achat" data-status="achat">🛍️ Acheté</button>
+      <button class="status-btn nontaille" data-status="nontaille">📏 Taille ≠</button>
+      <button class="status-btn skip" data-status="skip">⏭️ Skip</button>
+    </div>
+    <div class="alt-shops-box"><p>📦 Produit trouvé mais pas ta taille ? Essaie :</p><ul><li>→ Hinoya Ueno (mar. matin) — même marque</li><li>→ Kapital Ebisu (lundi) pour denim alternatif</li></ul></div>
+    <div class="note-row"><textarea class="note-input" placeholder="Note rapide... (taille essayée, prix, impression...)"></textarea></div>
+      <a class="maps-btn" href="https://maps.google.com/?cid=9086893688226152412" target="_blank">📍 Ouvrir dans Maps</a>
+    </div>
+  </div>
+
+  <div class="trajet-row">🚶 5 min (pendant retouches) → Visvim GYRE</div>
+
+  <div class="stop-card" data-sid="visvim" onclick="toggle(this)">
+    <div class="stop-header">
+      <span class="stop-time" style="background:var(--dim)">17h10</span>
+      <div class="stop-title"><div class="stop-name">Visvim GYRE Omotesando</div><div class="stop-tagline">Flagship + café Little Cloud · Pendant retouches</div></div>
+      <div class="stop-dur">30 min</div><span class="chevron">›</span>
+    </div>
+    <div class="stop-body">
+      <div class="stop-addr"><span class="stop-addr-icon">📍</span>5-10-1 Jingumae, Shibuya-ku (GYRE 2F)</div>
+      <span class="stop-hrs" style="background:var(--dim-l);color:var(--dim)">🕐 11h–20h</span>
+      <div class="stop-note">Faire PENDANT l'attente des retouches Momotaro. Flagship + café Little Cloud Coffee. ⚠️ Pas de photos.</div>
+      
+    <div class="status-bar">
+      <button class="status-btn fait" data-status="fait">✅ Fait</button>
+      <button class="status-btn achat" data-status="achat">🛍️ Acheté</button>
+      <button class="status-btn nontaille" data-status="nontaille">📏 Taille ≠</button>
+      <button class="status-btn skip" data-status="skip">⏭️ Skip</button>
+    </div>
+    <div class="alt-shops-box"><p>📦 Produit trouvé mais pas ta taille ? Essaie :</p><ul><li>→ Porter Omotesando (3 min)</li></ul></div>
+    <div class="note-row"><textarea class="note-input" placeholder="Note rapide... (taille essayée, prix, impression...)"></textarea></div>
+      <a class="maps-btn" href="https://maps.google.com/?cid=12969096125585702333" target="_blank">📍 Ouvrir dans Maps</a>
+    </div>
+  </div>
+
+  <div class="trajet-row">🚶 3 min → Porter Omotesando</div>
+
+  <div class="stop-card" data-sid="porter_omot" onclick="toggle(this)">
+    <div class="stop-header">
+      <span class="stop-time" style="background:var(--dim)">17h40</span>
+      <div class="stop-title"><div class="stop-name">PORTER Omotesando</div><div class="stop-tagline">Flagship 2 niveaux · Pendant retouches</div></div>
+      <div class="stop-dur">25 min</div><span class="chevron">›</span>
+    </div>
+    <div class="stop-body">
+      <div class="stop-addr"><span class="stop-addr-icon">📍</span>5-6-8 Jingumae, Shibuya-ku</div>
+      <span class="stop-hrs" style="background:var(--dim-l);color:var(--dim)">🕐 12h–20h</span>
+      <div class="stop-note">Faire PENDANT l'attente des retouches Momotaro. Flagship 2 niveaux. Exclusivités Omotesando. Staff anglophone patient.</div>
+      
+    <div class="status-bar">
+      <button class="status-btn fait" data-status="fait">✅ Fait</button>
+      <button class="status-btn achat" data-status="achat">🛍️ Acheté</button>
+      <button class="status-btn nontaille" data-status="nontaille">📏 Taille ≠</button>
+      <button class="status-btn skip" data-status="skip">⏭️ Skip</button>
+    </div>
+    <div class="alt-shops-box"><p>📦 Produit trouvé mais pas ta taille ? Essaie :</p><ul><li>→ Porter Exchange Shibuya (fin de journée)</li></ul></div>
+    <div class="note-row"><textarea class="note-input" placeholder="Note rapide... (taille essayée, prix, impression...)"></textarea></div>
+      <a class="maps-btn" href="https://maps.google.com/?cid=8677234650934003896" target="_blank">📍 Ouvrir dans Maps</a>
+    </div>
+  </div>
+
+  <div class="trajet-row">🚶 10 min → Momotaro (récupérer jean) → 2 min → WTAPS W_Lab</div>
+
+  <div class="stop-card alert" data-sid="wtaps" onclick="toggle(this)">
+    <div class="stop-header">
+      <span class="stop-time" style="background:var(--dim)">18h15</span>
+      <div class="stop-title"><div class="stop-name">⚡ WTAPS W_Lab Aoyama</div><div class="stop-tagline">Streetwear militaire · FERME 19h !</div></div>
+      <div class="stop-dur">25 min</div><span class="chevron">›</span>
+    </div>
+    <div class="stop-body">
+      <div class="stop-addr"><span class="stop-addr-icon">📍</span>5-3-10 Minami-Aoyama, Minato-ku (FROM-1st Bldg)</div>
+      <span class="stop-hrs" style="background:var(--dim-l);color:var(--dim)">🕐 11h–19h (pas 20h !)</span>
+      <div class="stop-note">Streetwear militaire/outdoor japonais. Collection change chaque semaine. Limite de personnes en boutique.</div>
+      <div class="stop-alert">⚡ FERME 19h ABSOLU — arriver avant 18h30</div>
+      
+    <div class="status-bar">
+      <button class="status-btn fait" data-status="fait">✅ Fait</button>
+      <button class="status-btn achat" data-status="achat">🛍️ Acheté</button>
+      <button class="status-btn nontaille" data-status="nontaille">📏 Taille ≠</button>
+      <button class="status-btn skip" data-status="skip">⏭️ Skip</button>
+    </div>
+    
+    <div class="note-row"><textarea class="note-input" placeholder="Note rapide... (taille essayée, prix, impression...)"></textarea></div>
+      <a class="maps-btn" href="https://maps.google.com/?cid=8727918268975085387" target="_blank">📍 Ouvrir dans Maps</a>
+    </div>
+  </div>
+
+  <div class="trajet-row">🚶 2 min → Yohji Yamamoto · 🚇 Omotesando→Shibuya (Ginza line, 2 min) ou 🚶 15 min</div>
+
+  <div class="stop-card" data-sid="yohji" onclick="toggle(this)">
+    <div class="stop-header">
+      <span class="stop-time" style="background:var(--dim)">18h40</span>
+      <div class="stop-title"><div class="stop-name">Yohji Yamamoto Aoyama</div><div class="stop-tagline">Flagship · Y's · Mainline · Wildside</div></div>
+      <div class="stop-dur">20 min</div><span class="chevron">›</span>
+    </div>
+    <div class="stop-body">
+      <div class="stop-addr"><span class="stop-addr-icon">📍</span>5-3-6 Minami-Aoyama, Minato-ku</div>
+      <span class="stop-hrs" style="background:var(--dim-l);color:var(--dim)">🕐 11h–20h</span>
+      <div class="stop-note">Collection complète Y's, mainline, Wildside. Architecture iconique. Staff anglophone.</div>
+      
+    <div class="status-bar">
+      <button class="status-btn fait" data-status="fait">✅ Fait</button>
+      <button class="status-btn achat" data-status="achat">🛍️ Acheté</button>
+      <button class="status-btn nontaille" data-status="nontaille">📏 Taille ≠</button>
+      <button class="status-btn skip" data-status="skip">⏭️ Skip</button>
+    </div>
+    
+    <div class="note-row"><textarea class="note-input" placeholder="Note rapide... (taille essayée, prix, impression...)"></textarea></div>
+      <a class="maps-btn" href="https://maps.google.com/?cid=6060738767411088058" target="_blank">📍 Ouvrir dans Maps</a>
+    </div>
+  </div>
+
+  <div class="trajet-row">🚇 Omotesando→Shibuya (Ginza line, 2 min)</div>
+
+  <div class="stop-card" data-sid="porter_shib" onclick="toggle(this)">
+    <div class="stop-header">
+      <span class="stop-time" style="background:var(--dim)">19h05</span>
+      <div class="stop-title"><div class="stop-name">PORTER EXCHANGE Shibuya</div><div class="stop-tagline">Parco 1F · Thème militaire · Exclusifs</div></div>
+      <div class="stop-dur">25 min</div><span class="chevron">›</span>
+    </div>
+    <div class="stop-body">
+      <div class="stop-addr"><span class="stop-addr-icon">📍</span>Shibuya Parco 1F, 15-1 Udagawacho</div>
+      <span class="stop-hrs" style="background:var(--dim-l);color:var(--dim)">🕐 11h–21h</span>
+      <div class="stop-note">Exclusivités Porter Exchange (thème militaire). Staff exceptionnel et anglophone.</div>
+      
+    <div class="status-bar">
+      <button class="status-btn fait" data-status="fait">✅ Fait</button>
+      <button class="status-btn achat" data-status="achat">🛍️ Acheté</button>
+      <button class="status-btn nontaille" data-status="nontaille">📏 Taille ≠</button>
+      <button class="status-btn skip" data-status="skip">⏭️ Skip</button>
+    </div>
+    <div class="alt-shops-box"><p>📦 Produit trouvé mais pas ta taille ? Essaie :</p><ul><li>→ Porter Omotesando (déjà fait)</li></ul></div>
+    <div class="note-row"><textarea class="note-input" placeholder="Note rapide... (taille essayée, prix, impression...)"></textarea></div>
+      <a class="maps-btn" href="https://maps.google.com/?cid=6772350530441951995" target="_blank">📍 Ouvrir dans Maps</a>
+    </div>
+  </div>
+
+
+  <div class="trajet-row">🚶 5 min → Stumptown Shibuya (1-11 Jinnan — monter au 2F au-dessus ABC Mart)</div>
+
+  <div class="stop-card" data-sid="stumptown_shib" onclick="toggle(this)">
+    <div class="stop-header">
+      <span class="stop-time" style="background:var(--dim)">19h30</span>
+      <div class="stop-title"><div class="stop-name">🥾 Stumptown Shibuya</div><div class="stop-tagline">Danner · White's · 2F au-dessus ABC Mart</div></div>
+      <div class="stop-dur">25 min</div><span class="chevron">›</span>
+    </div>
+    <div class="stop-body">
+      <div class="stop-addr"><span class="stop-addr-icon">📍</span>1-11 Jinnan, Shibuya-ku (2F, au-dessus ABC Mart)</div>
+      <span class="stop-hrs" style="background:var(--dim-l);color:var(--dim)">🕐 11h–20h (tous jours)</span>
+      <div class="stop-note">2e boutique Stumptown après Ginza — sélection différente, certains modèles exclusifs Shibuya. Commandes custom White's également acceptées. Avis plus mitigés que Ginza sur l'accueil, mais bon stock. ⚠️ L'entrée n'est pas évidente : monter au 2F de l'immeuble au-dessus de l'ABC Mart.</div>
+      <div class="stop-alert">⚠️ Entrée : 2F au-dessus ABC Mart · Ferme 20h · ~25 min avant fermeture</div>
+      <div class="status-bar">
+        <button class="status-btn fait" data-status="fait">✅ Fait</button>
+        <button class="status-btn achat" data-status="achat">🛍️ Acheté</button>
+        <button class="status-btn nontaille" data-status="nontaille">📏 Taille ≠</button>
+        <button class="status-btn skip" data-status="skip">⏭️ Skip</button>
+      </div>
+      <div class="alt-shops-box"><p>📦 Pas ta taille ? Essaie :</p><ul><li>→ Stumptown Ginza (déjà fait samedi)</li></ul></div>
+      <div class="note-row"><textarea class="note-input" placeholder="Modèles dispo, taille, différences vs Ginza..."></textarea></div>
+      <a class="maps-btn" href="https://maps.google.com/?cid=3379716124064031563" target="_blank">📍 Ouvrir dans Maps</a>
+    </div>
+  </div>
+
+  <div class="trajet-row">🚶 5 min → Public Tokyo</div>
+
+  <div class="stop-card" data-sid="publictokyo" onclick="toggle(this)">
+    <div class="stop-header">
+      <span class="stop-time" style="background:var(--dim)">19h55</span>
+      <div class="stop-title"><div class="stop-name">PUBLIC TOKYO Shibuya</div><div class="stop-tagline">Made in Japan · Scramble Square 7F</div></div>
+      <div class="stop-dur">25 min</div><span class="chevron">›</span>
+    </div>
+    <div class="stop-body">
+      <div class="stop-addr"><span class="stop-addr-icon">📍</span>Shibuya Scramble Square 7F, 2-24-12 Shibuya</div>
+      <span class="stop-hrs" style="background:var(--dim-l);color:var(--dim)">🕐 10h–21h</span>
+      <div class="stop-note">Mode japonaise épurée, Made in Japan. Staff attentionné (Toya recommandé). Dernier stop de la journée.</div>
+      
+    <div class="status-bar">
+      <button class="status-btn fait" data-status="fait">✅ Fait</button>
+      <button class="status-btn achat" data-status="achat">🛍️ Acheté</button>
+      <button class="status-btn nontaille" data-status="nontaille">📏 Taille ≠</button>
+      <button class="status-btn skip" data-status="skip">⏭️ Skip</button>
+    </div>
+    
+    <div class="note-row"><textarea class="note-input" placeholder="Note rapide... (taille essayée, prix, impression...)"></textarea></div>
+      <a class="maps-btn" href="https://maps.google.com/?cid=15802986719109691240" target="_blank">📍 Ouvrir dans Maps</a>
+    </div>
+  </div>
+
+  <div class="trajet-row">🚇 Shibuya→Kuramae (~25 min, Hanzomon→Asakusa lines)</div>
+</div>
+
+<!-- ═══════════════ LUNDI 23 ═══════════════ -->
+<div class="day-section" id="day-lun">
+  <div class="day-header-bar" style="background:var(--lun)">
+    <h2>📅 Lundi 23 — Ebisu / Nakameguro / Daikanyama</h2>
+    <div class="sub">11h–14h · ⚡⚡ OAO = RDV obligatoire sur oaofootwear.com</div>
+  </div>
+  <div class="route-wrap" style="background:var(--lun-l)">
+    <a class="route-btn" href="https://www.google.com/maps/dir/Kapital+Ebisu/Visvim+General+Store+Nakameguro/OAO+HAUS+Daikanyama/@35.648,139.702,15z" target="_blank">🧭 Itinéraire Ebisu→Daikanyama</a>
+  </div>
+
+  <div class="trajet-row">🚇 Kuramae→Naka-Okachimachi (Oedo, 2 min) + Naka-Okachimachi→Ebisu (Hibiya, ~22 min) = 25 min</div>
+
+  <div class="stop-card" data-sid="kapital" onclick="toggle(this)">
+    <div class="stop-header">
+      <span class="stop-time" style="background:var(--lun)">11h00</span>
+      <div class="stop-title"><div class="stop-name">Kapital Ebisu (cluster x3)</div><div class="stop-tagline">Denim · Workwear · Americana japonais</div></div>
+      <div class="stop-dur">50 min</div><span class="chevron">›</span>
+    </div>
+    <div class="stop-body">
+      <div class="stop-addr"><span class="stop-addr-icon">📍</span>2-20-2 Ebisuminami, Shibuya-ku + 2 boutiques à 5 min</div>
+      <span class="stop-hrs" style="background:var(--lun-l);color:var(--lun)">🕐 11h–20h</span>
+      <div class="stop-note">3 boutiques à enchaîner — sélections différentes. Denim, workwear, Americana japonais, patchwork artisanal. ⚠️ Pas de tax-free.</div>
+      <div class="stop-alert">⚠️ PAS de tax-free chez Kapital</div>
+      
+    <div class="status-bar">
+      <button class="status-btn fait" data-status="fait">✅ Fait</button>
+      <button class="status-btn achat" data-status="achat">🛍️ Acheté</button>
+      <button class="status-btn nontaille" data-status="nontaille">📏 Taille ≠</button>
+      <button class="status-btn skip" data-status="skip">⏭️ Skip</button>
+    </div>
+    <div class="alt-shops-box"><p>📦 Produit trouvé mais pas ta taille ? Essaie :</p><ul><li>→ Visvim General Store (15 min à pied)</li></ul></div>
+    <div class="note-row"><textarea class="note-input" placeholder="Note rapide... (taille essayée, prix, impression...)"></textarea></div>
+      <a class="maps-btn" href="https://maps.google.com/?cid=3504688113222414750" target="_blank">📍 Ouvrir dans Maps</a>
+    </div>
+  </div>
+
+  <div class="trajet-row">🚶 15 min à pied Ebisu→Nakameguro (ou taxi 3 min)</div>
+
+  <div class="stop-card" data-sid="visvim_naka" onclick="toggle(this)">
+    <div class="stop-header">
+      <span class="stop-time" style="background:var(--lun)">12h10</span>
+      <div class="stop-title"><div class="stop-name">Visvim General Store Nakameguro</div><div class="stop-tagline">Jardin japonais · Collection complète</div></div>
+      <div class="stop-dur">40 min</div><span class="chevron">›</span>
+    </div>
+    <div class="stop-body">
+      <div class="stop-addr"><span class="stop-addr-icon">📍</span>1-22-11 Aobadai, Meguro-ku</div>
+      <span class="stop-hrs" style="background:var(--lun-l);color:var(--lun)">🕐 11h–20h</span>
+      <div class="stop-note">Jardin japonais traditionnel, atmosphère sereine très différente du GYRE Omotesando. Collection complète + ligne WMV. Mobilier vintage.</div>
+      
+    <div class="status-bar">
+      <button class="status-btn fait" data-status="fait">✅ Fait</button>
+      <button class="status-btn achat" data-status="achat">🛍️ Acheté</button>
+      <button class="status-btn nontaille" data-status="nontaille">📏 Taille ≠</button>
+      <button class="status-btn skip" data-status="skip">⏭️ Skip</button>
+    </div>
+    <div class="alt-shops-box"><p>📦 Produit trouvé mais pas ta taille ? Essaie :</p><ul><li>→ OAO Haus (5 min)</li></ul></div>
+    <div class="note-row"><textarea class="note-input" placeholder="Note rapide... (taille essayée, prix, impression...)"></textarea></div>
+      <a class="maps-btn" href="https://maps.google.com/?cid=7922892834993280682" target="_blank">📍 Ouvrir dans Maps</a>
+    </div>
+  </div>
+
+  <div class="trajet-row">🚶 5 min Nakameguro→Daikanyama</div>
+
+  <div class="stop-card alert" data-sid="oao" onclick="toggle(this)">
+    <div class="stop-header">
+      <span class="stop-time" style="background:var(--lun)">13h00</span>
+      <div class="stop-title"><div class="stop-name">⚡⚡ OAO Haus Daikanyama</div><div class="stop-tagline">Chaussures · RDV OBLIGATOIRE</div></div>
+      <div class="stop-dur">45 min</div><span class="chevron">›</span>
+    </div>
+    <div class="stop-body">
+      <div class="stop-addr"><span class="stop-addr-icon">📍</span>14-23 Sarugakucho, Shibuya-ku (3F)</div>
+      <span class="stop-hrs" style="background:var(--lun-l);color:var(--lun)">🕐 12h–20h (lun-ven) · 12h–19h (sam-dim)</span>
+      <div class="stop-note">Sneakers et cuir minimaliste japonais, semelles Vibram. Service 1-on-1 personnalisé. Staff anglophone (Shin recommandé). Peut expédier à l'hôtel si rupture de stock.</div>
+      <div class="stop-alert">⚡⚡ RDV OBLIGATOIRE → oaofootwear.com/pages/oao-haus · Réserver MAINTENANT</div>
+      
+    <div class="status-bar">
+      <button class="status-btn fait" data-status="fait">✅ Fait</button>
+      <button class="status-btn achat" data-status="achat">🛍️ Acheté</button>
+      <button class="status-btn nontaille" data-status="nontaille">📏 Taille ≠</button>
+      <button class="status-btn skip" data-status="skip">⏭️ Skip</button>
+    </div>
+    
+    <div class="note-row"><textarea class="note-input" placeholder="Note rapide... (taille essayée, prix, impression...)"></textarea></div>
+      <a class="maps-btn" href="https://maps.google.com/?cid=4354374327287782711" target="_blank">📍 Ouvrir dans Maps</a>
+    </div>
+  </div>
+
+  <div class="trajet-row">🚇 Daikanyama→Kuramae (~25 min)</div>
+</div>
+
+<!-- ═══════════════ MARDI 24 ═══════════════ -->
+<div class="day-section" id="day-mar">
+  <div class="day-header-bar" style="background:var(--mar)">
+    <h2>📅 Mardi 24 — Ueno (matin) + Départ</h2>
+    <div class="sub">10h30–12h · Départ hôtel ~15h · Vol 18h</div>
+  </div>
+  <div class="route-wrap" style="background:var(--mar-l)">
+    <a class="route-btn" href="https://www.google.com/maps/dir/HINOYA+Ueno/General+Garden+Ueno/@35.7098,139.775,17z" target="_blank">🧭 Hinoya + General Garden</a>
+  </div>
+
+  <div class="trajet-row">🚶 10 min à pied depuis l'hôtel (via Asakusa-dori)</div>
+
+  <div class="stop-card" data-sid="hinoya" onclick="toggle(this)">
+    <div class="stop-header">
+      <span class="stop-time" style="background:var(--mar)">10h30</span>
+      <div class="stop-title"><div class="stop-name">⭐ HINOYA</div><div class="stop-tagline">Denim premium · Retouches 1h</div></div>
+      <div class="stop-dur">30 min + 1h retouches</div><span class="chevron">›</span>
+    </div>
+    <div class="stop-body">
+      <div class="stop-addr"><span class="stop-addr-icon">📍</span>6-10-14 Ueno, Taito-ku (Ameyoko)</div>
+      <span class="stop-hrs" style="background:var(--mar-l);color:var(--mar)">🕐 10h30–20h</span>
+      <div class="stop-note">Meilleure sélection denim premium Tokyo : Momotaro, Studio D'Artisan, Oni Denim, Sugar Cane. Staff expert (Yuka recommandée). Tax-free disponible. ⚡ STRATÉGIE : donner le jean en retouche EN ARRIVANT → General Garden → revenir récupérer.</div>
+      <div class="stop-alert">Tax-free ✅ · Retouches ~1h · Donner jean dès l'arrivée</div>
+      
+    <div class="status-bar">
+      <button class="status-btn fait" data-status="fait">✅ Fait</button>
+      <button class="status-btn achat" data-status="achat">🛍️ Acheté</button>
+      <button class="status-btn nontaille" data-status="nontaille">📏 Taille ≠</button>
+      <button class="status-btn skip" data-status="skip">⏭️ Skip</button>
+    </div>
+    <div class="alt-shops-box"><p>📦 Produit trouvé mais pas ta taille ? Essaie :</p><ul><li>→ Momotaro Jeans Aoyama (dim.) — même marque dispo</li><li>→ General Garden (200m) pour cuir</li></ul></div>
+    <div class="note-row"><textarea class="note-input" placeholder="Note rapide... (taille essayée, prix, impression...)"></textarea></div>
+      <a class="maps-btn" href="https://maps.google.com/?cid=7904755559523666318" target="_blank">📍 Ouvrir dans Maps</a>
+    </div>
+  </div>
+
+  <div class="trajet-row">🚶 3 min vers le nord → General Garden</div>
+
+  <div class="stop-card" data-sid="generalgarden" onclick="toggle(this)">
+    <div class="stop-header">
+      <span class="stop-time" style="background:var(--mar)">11h05</span>
+      <div class="stop-title"><div class="stop-name">General Garden</div><div class="stop-tagline">Cuir · Denim · Pendant retouches Hinoya</div></div>
+      <div class="stop-dur">40 min</div><span class="chevron">›</span>
+    </div>
+    <div class="stop-body">
+      <div class="stop-addr"><span class="stop-addr-icon">📍</span>6-10-22 Ueno, Taito-ku</div>
+      <span class="stop-hrs" style="background:var(--mar-l);color:var(--mar)">🕐 10h30–20h</span>
+      <div class="stop-note">Maroquinerie cuir (riders, B3 mouton) + denim. 2 étages. Sélection Samurai Jeans. Staff variable selon avis.</div>
+      <div class="stop-alert">⚠️ PAS de tax-free · Accueil parfois froid</div>
+      
+    <div class="status-bar">
+      <button class="status-btn fait" data-status="fait">✅ Fait</button>
+      <button class="status-btn achat" data-status="achat">🛍️ Acheté</button>
+      <button class="status-btn nontaille" data-status="nontaille">📏 Taille ≠</button>
+      <button class="status-btn skip" data-status="skip">⏭️ Skip</button>
+    </div>
+    <div class="alt-shops-box"><p>📦 Produit trouvé mais pas ta taille ? Essaie :</p><ul><li>→ Hinoya (200m) pour denim japonais</li></ul></div>
+    <div class="note-row"><textarea class="note-input" placeholder="Note rapide... (taille essayée, prix, impression...)"></textarea></div>
+      <a class="maps-btn" href="https://maps.google.com/?cid=1784407595364759289" target="_blank">📍 Ouvrir dans Maps</a>
+    </div>
+  </div>
+
+  <div class="trajet-row">🚶 3 min → Hinoya (récupération jean retouché)</div>
+
+  <div class="stop-card" onclick="toggle(this)">
+    <div class="stop-header">
+      <span class="stop-time" style="background:var(--mar)">11h50</span>
+      <div class="stop-title"><div class="stop-name">↩️ Hinoya — récupération</div><div class="stop-tagline">Jean retouché · Puis hôtel</div></div>
+      <div class="stop-dur">10 min</div><span class="chevron">›</span>
+    </div>
+    <div class="stop-body">
+      <div class="stop-note">Récupérer le jean. Vérifier la longueur avant de partir. Puis retour hôtel à pied (10 min).</div>
+      <a class="maps-btn" href="https://maps.google.com/?cid=7904755559523666318" target="_blank">📍 Hinoya dans Maps</a>
+    </div>
+  </div>
+
+  <div class="trajet-row">🚶 10 min → Hôtel · Bagages · Départ ~15h · ✈️ Vol 18h</div>
+</div>
+
+<script>
+function showDay(day) {
+  document.querySelectorAll('.day-section').forEach(s => s.classList.remove('visible'));
+  document.querySelectorAll('.day-pill').forEach(p => p.classList.remove('active'));
+  document.getElementById('day-' + day).classList.add('visible');
+  document.querySelectorAll('.day-pill.' + day).forEach(p => p.classList.add('active'));
+  window.scrollTo({top: 0, behavior: 'smooth'});
+}
+function toggle(card) {
+  card.classList.toggle('open');
+}
+
+// ── STORAGE (in-memory, persists during session) ─────────────────
+// Using a simple in-memory object since localStorage isn't available
+// For persistence across sessions, we'll use sessionStorage as fallback
+const store = {
+  get(k){ try{ return JSON.parse(sessionStorage.getItem('tok_'+k)||'null') }catch(e){return null} },
+  set(k,v){ try{ sessionStorage.setItem('tok_'+k, JSON.stringify(v)) }catch(e){} }
+};
+
+// ── STATUS LABELS ─────────────────────────────────────────────────
+const STATUS_LABELS = {
+  fait:       '✅ Fait',
+  achat:      '🛍️ Acheté',
+  nontaille:  '📏 Pas ma taille',
+  skip:       '⏭️ Passé'
+};
+const STATUS_BADGE = {
+  fait:       {cls:'badge-fait',      label:'✅ Fait'},
+  achat:      {cls:'badge-achat',     label:'🛍️ Acheté'},
+  nontaille:  {cls:'badge-nontaille', label:'📏 Taille ≠'},
+  skip:       {cls:'badge-skip',      label:'⏭️ Skip'}
+};
+
+function getState(id){ return store.get(id) || {status:null, note:''} }
+function saveState(id, patch){
+  const s = getState(id);
+  Object.assign(s, patch);
+  store.set(id, s);
+}
+
+function applyState(card){
+  const id = card.dataset.sid;
+  if(!id) return;
+  const s = getState(id);
+
+  // Update buttons
+  card.querySelectorAll('.status-btn').forEach(btn => {
+    btn.classList.toggle('on', btn.dataset.status === s.status);
+  });
+
+  // Update badge
+  let badge = card.querySelector('.status-badge');
+  if(!badge){
+    badge = document.createElement('span');
+    badge.className = 'status-badge';
+    const h = card.querySelector('.stop-header');
+    if(h) h.style.position='relative', h.appendChild(badge);
+  }
+  if(s.status && STATUS_BADGE[s.status]){
+    badge.textContent = STATUS_BADGE[s.status].label;
+    badge.className = 'status-badge ' + STATUS_BADGE[s.status].cls;
+    badge.style.display = '';
+  } else {
+    badge.style.display = 'none';
+  }
+
+  // Card class
+  card.className = card.className.replace(/\bstatus-\w+/g,'').trim();
+  if(s.status) card.classList.add('status-'+s.status);
+
+  // Alts box
+  const alts = card.querySelector('.alt-shops-box');
+  if(alts) alts.classList.toggle('visible', s.status === 'nontaille');
+
+  // Note
+  const ni = card.querySelector('.note-input');
+  if(ni && ni.value !== s.note) ni.value = s.note || '';
+}
+
+function setStatus(card, status){
+  const id = card.dataset.sid;
+  const cur = getState(id).status;
+  // Toggle off if same
+  const newStatus = cur === status ? null : status;
+  saveState(id, {status: newStatus});
+  applyState(card);
+  // Auto-open card if setting status
+  if(newStatus && !card.classList.contains('open')) card.classList.add('open');
+}
+
+function initCard(card){
+  const id = card.dataset.sid;
+  if(!id) return;
+  applyState(card);
+  const ni = card.querySelector('.note-input');
+  if(ni){
+    ni.addEventListener('input', ()=>{ saveState(id,{note:ni.value}); });
+    ni.addEventListener('click', e=>e.stopPropagation());
+  }
+  card.querySelectorAll('.status-btn').forEach(btn=>{
+    btn.addEventListener('click', e=>{
+      e.stopPropagation();
+      setStatus(card, btn.dataset.status);
+    });
+  });
+}
+
+// ── INIT ──────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', ()=>{
+  document.querySelectorAll('.stop-card[data-sid]').forEach(initCard);
+});
+
+</script>
+</body>
+</html>
